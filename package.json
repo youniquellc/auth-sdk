@@ -13,13 +13,12 @@
   },
   "dependencies": {
     "aws-sdk": "^2.90.0",
-    "extend": "^3.0.1",
-    "leo-auth": "^1.0.0"
+    "extend": "^3.0.1"
   },
   "devDependencies": {
     "mocha": "^3.5.0"
   },
   "author": "LEO Enterprises <dev@leoplatform.io> (http://leoplatform.io)",
-  "repository": "LeoPlatform/Nodejs",
+  "repository": "LeoPlatform/auth-sdk",
   "license": "MIT"
 }
