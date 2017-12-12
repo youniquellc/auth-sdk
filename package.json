@@ -1,0 +1,25 @@
+{
+  "name": "leo-auth",
+  "version": "1.0.0",
+  "description": "Auth sdk",
+  "homepage": "https://leoplatform.io",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "tests": "mocha --recursive -w",
+    "test": "mocha --recursive -g"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.90.0",
+    "extend": "^3.0.1",
+    "leo-auth": "^1.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^3.5.0"
+  },
+  "author": "LEO Enterprises <dev@leoplatform.io> (http://leoplatform.io)",
+  "repository": "LeoPlatform/Nodejs",
+  "license": "MIT"
+}
