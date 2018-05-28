@@ -66,6 +66,10 @@ function createRequest(event, resource) {
 
 module.exports = {
 	getUser: async function(id) {
+		if (id && id.requestContext) {
+			id = id.requestContext;
+		}
+
 		if (!id) {
 			return wrapUser({
 				context: {},
