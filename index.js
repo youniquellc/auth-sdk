@@ -1,8 +1,10 @@
+let config = require("leo-config");
 var policy = require("./lib/policy");
+let dynamodb = require("leo-aws").dynamodb;
 
-let USER_TABLE;
-let AUTH_TABLE;
-let dynamodb;
+let USER_TABLE = config.leoauth.LeoAuthUser;
+let AUTH_TABLE = config.leoauth.LeoAuth;
+
 
 let authConfig = {};
 
@@ -67,17 +69,8 @@ function createRequest(event, resource) {
 	return request;
 };
 
-module.exports = function(config, leoConfig) {
-	if (!leoConfig && !config.actions) {
-		leoConfig = config;
-		config = {};
-	}
-	if (leoConfig) {
-		dynamodb = leoConfig.leoaws.dynamodb;
-		USER_TABLE = leoConfig.leoauth.resources.LeoAuthUser;
-		AUTH_TABLE = leoConfig.leoauth.resources.LeoAuth;
-	}
 
+module.exports = function(config = {}) {
 	if (config.actions) {
 		let actionPrefix = config.actions;
 		if (!actionPrefix) {
