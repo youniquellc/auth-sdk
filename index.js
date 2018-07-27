@@ -70,96 +70,96 @@ function createRequest(event, resource) {
 };
 
 
-module.exports = function(config = {}) {
-	if (config.actions) {
-		let actionPrefix = config.actions;
-		if (!actionPrefix) {
-			throw new Error("You have not defined an action prefix");
+module.exports = {
+	getUser: async function(id) {
+		if (id && id.requestContext) {
+			id = id.requestContext;
 		}
-		let resourcePrefix = config.resource;
-		let parts = resourcePrefix.split(/:/).filter(e => e.length != 0);
-		if (!resourcePrefix || parts.length < 3) {
-			throw new Error("You have not defined an action prefix");
-		};
-		while (parts.length <= 5) {
-			parts.push('');
-		}
-		resourcePrefix = parts.join(":");
-		let statements = {};
-		Object.keys(config.identities).map(id => {
-			let p = config.identities[id];
-			statements[id] = [];
-			p.map(policy => {
-				//stringify it so it matches the old way of doing it for now
-				statements[id] = statements[id].concat(config.policies[policy].map(p => {
-					if (p.Action && !p.Action.match(/:/)) {
-						p.Action = actionPrefix + ":" + p.Action;
-					}
-					if (p.Resource && !p.Resource.match(/^lrn/)) {
-						p.Resource = resourcePrefix + p.Resource;
-					}
-					return JSON.stringify(p);
-				}));
+
+		if (!id) {
+			return wrapUser({
+				context: {},
+				identity_id: id,
+				identities: []
 			});
-		});
-		authConfig = {
-			actionPrefix: actionPrefix,
-			resourcePrefix: resourcePrefix,
-			statements: statements
-		}
-	}
-	return {
-		getUser: async function(id) {
-			if (id && id.requestContext) {
-				id = id.requestContext;
+		} else if (id && id.identity && !id.identity.cognitoIdentityId && id.identity.caller) {
+			return wrapUser({
+				identity_id: "aws_key",
+				context: {
+					key: id.identity.caller
+				},
+				identities: ["role/aws_key"]
+			});
+		} else {
+			if (id && id.identity) {
+				id = id.identity.cognitoIdentityId || '*';
 			}
 
-			if (!id) {
-				return wrapUser({
-					context: {},
-					identity_id: id,
-					identities: []
-				});
-			} else if (id && id.identity && !id.identity.cognitoIdentityId && id.identity.caller) {
-				return wrapUser({
-					identity_id: "aws_key",
-					context: {
-						key: id.identity.caller
-					},
-					identities: ["role/aws_key"]
-				});
-			} else {
-				if (id && id.identity) {
-					id = id.identity.cognitoIdentityId || '*';
-				}
-
-				return dynamodb.get(USER_TABLE, id, {
-					id: "identity_id"
-				}).then(data => {
-					if (!data || !data.Item || data.Item.identity_id !== id) {
-						return wrapUser({
-							context: {},
-							identity_id: id,
-							identities: []
-						});
-					} else {
-						//Support older ones where it was stored as a string
-						if (typeof data.Item.context == "string") {
-							data.Item.context = JSON.parse(data.Item.context);
-						}
-						return wrapUser(data.Item);
+			return dynamodb.get(USER_TABLE, id, {
+				id: "identity_id"
+			}).then(data => {
+				if (!data || !data.Item || data.Item.identity_id !== id) {
+					return wrapUser({
+						context: {},
+						identity_id: id,
+						identities: []
+					});
+				} else {
+					//Support older ones where it was stored as a string
+					if (typeof data.Item.context == "string") {
+						data.Item.context = JSON.parse(data.Item.context);
 					}
-				});
-			}
-		},
-		authorize: async function(event, resource, user = null) {
-			if (user) {
-				if (!(authorize in user)) {
-					wrapUser(user);
+					return wrapUser(data.Item);
 				}
-				return user.authorize(event, resource);
-			} else {
-				return this.getUser(event.requestContext).then(user => user.authorize(event, resource));
+			});
+		}
+	},
+	authorize: async function(event, resource, user = null) {
+		if (user) {
+			if (!(authorize in user)) {
+				wrapUser(user);
+			}
+			return user.authorize(event, resource);
+		} else {
+			return this.getUser(event.requestContext).then(user => user.authorize(event, resource));
+		}
+	},
+	bootstrap: function(config) {
+		if (config.actions) {
+			let actionPrefix = config.actions;
+			if (!actionPrefix) {
+				throw new Error("You have not defined an action prefix");
+			}
+			let resourcePrefix = config.resource;
+			let parts = resourcePrefix.split(/:/).filter(e => e.length != 0);
+			if (!resourcePrefix || parts.length < 3) {
+				throw new Error("You have not defined an action prefix");
+			};
+			while (parts.length <= 5) {
+				parts.push('');
+			}
+			resourcePrefix = parts.join(":");
+			let statements = {};
+			Object.keys(config.identities).map(id => {
+				let p = config.identities[id];
+				statements[id] = [];
+				p.map(policy => {
+					//stringify it so it matches the old way of doing it for now
+					statements[id] = statements[id].concat(config.policies[policy].map(p => {
+						if (p.Action && !p.Action.match(/:/)) {
+							p.Action = actionPrefix + ":" + p.Action;
+						}
+						if (p.Resource && !p.Resource.match(/^lrn/)) {
+							p.Resource = resourcePrefix + p.Resource;
+						}
+						return JSON.stringify(p);
+					}));
+				});
+			});
+			authConfig = {
+				actionPrefix: actionPrefix,
+				resourcePrefix: resourcePrefix,
+				statements: statements
 			}
 		}
 	}
