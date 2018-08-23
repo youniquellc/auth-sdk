@@ -19,10 +19,19 @@ function wrapUser(user) {
 			});
 		} else {
 			let data = await dynamodb.batchGetHashkey(AUTH_TABLE, "identity", user.identities.concat('*'), {});
+			if (!resource.context) {
+				resource.context = [];
+			}
+			if (!Array.isArray(resource.context)) {
+				resource.context = [resource.context];
+			}
 			for (var id in data) {
 				for (var name in data[id].policies) {
 					statements = statements.concat(data[id].policies[name]);
 				}
+				resource.context.map(c => {
+					user.context[c] = Object.assign(user.context[c] || {}, data[id][c])
+				});
 			}
 		}
 		var result = policy.validate(request, policy.contextify(user.context, statements));
@@ -98,7 +107,7 @@ module.exports = {
 			return dynamodb.get(USER_TABLE, id, {
 				id: "identity_id"
 			}).then(data => {
-				if (!data || !data.Item || data.Item.identity_id !== id) {
+				if (!data || data.identity_id !== id) {
 					return wrapUser({
 						context: {},
 						identity_id: id,
@@ -106,10 +115,10 @@ module.exports = {
 					});
 				} else {
 					//Support older ones where it was stored as a string
-					if (typeof data.Item.context == "string") {
-						data.Item.context = JSON.parse(data.Item.context);
+					if (typeof data.context == "string") {
+						data.context = JSON.parse(data.context);
 					}
-					return wrapUser(data.Item);
+					return wrapUser(data);
 				}
 			});
 		}
