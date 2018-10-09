@@ -20,9 +20,6 @@ AUTH_ROLE_POLICIES_TABLE
   - The preferred way is to import the value from CloudFormation **Fn::ImportValue "Users-RolePoliciesTable"**
   - If you are using serverless you can use **${cf:Users.RolePoliciesTable}**
 
-AUTH_AWS_REGION
-  - You'll need to provide the region to the auth-sdk. This will likely be the same region as you are deploy the stack to, but it needs to be the region where the Users* dynamodb tables exist.
-
 During development you'll need to manually provide the environment variables, unless you are using serverless. If using serverless and the variables above then the environment will be populated automatically. Since this is a public repo, you'll need to look up the variables in the Users stack of the dev AWS account.
 
 ## Process

@@ -1,10 +1,8 @@
 const policy = require('./lib/policy');
 const dynamoUtil = require('./lib/dynamodb_util');
 
-const REGION = process.env.AUTH_AWS_REGION;
 const IDENTITIES_TABLE = process.env.AUTH_IDENTITES_TABLE;
 const ROLE_POLICIES_TABLE = process.env.AUTH_ROLE_POLICIES_TABLE;
-
 
 let authConfig = {};
 
