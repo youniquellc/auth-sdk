@@ -33,6 +33,7 @@ const addAuthorizeToUser = (user) => {
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
+      console.log('user', JSON.stringify(user));
       let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
 
       if (!resource.context) {
@@ -70,6 +71,7 @@ const addAuthorizeToUser = (user) => {
 
     return user;
   };
+
   return user;
 };
 
