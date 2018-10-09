@@ -33,7 +33,6 @@ function addAuthorizeToUser(user) {
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
-      console.log('user', JSON.stringify(user));
       let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
 
       if (!resource.context) {
@@ -180,7 +179,6 @@ module.exports = {
       // Attempt to get the user from the identites table.
       return dynamoUtil.get(IDENTITIES_TABLE, 'identity_id', id)
         .then(data => {
-          console.log('ddb get user', JSON.stringify(data));
           // If there was no data in dynamo then we will return an anonymous user.
           if (!data || data.identity_id !== id) {
             return addAuthorizeToUser({
