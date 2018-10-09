@@ -82,6 +82,10 @@ module.exports = {
       'create_look',
       'delete_look',
     ],
+    'role/presenter': [
+      'create_look',
+      'delete_look',
+    ],
     'role/admin': [
       'looks_admin',
     ],
@@ -93,14 +97,14 @@ module.exports = {
         Action: "looks:counts",
         Resource: "lrn:younique:looks:::*",
       },
-    ]
+    ],
     'list_looks': [
       {
         Effect: "Allow",
         Action: "looks:list",
         Resource: "lrn:younique:looks:::*",
       },
-    ]
+    ],
     'create_look': [
       {
         Effect: "Allow",
@@ -137,21 +141,55 @@ module.exports = {
 };
 ```
 
+If you noticed in the policy above the role/user and role/presenter roles both have the same policy names underneath them. This allows you to write the policy only once and then attach it to as many roles as is necessary.
+
 This is the easiest way and does not required a dev ops ticket to implement. Otherwise you'll have to write the policy, test it in dev, and then submit the policy to dev ops to have the policy added to the production dynamo tables.
 
 ## Writing policies
 
-There are a few ways to write policies. You can either write a Allow policies (all the policies in the example are allow policies) or you can write Deny policies. Both types of policies accept conditions.
+There are a few ways to write policies. You can either write an Allow policies (all the policies in the example above are allow policies) or you can write Deny policies. Both types of policies accept conditions.
 
 The following is a list of the available conditions:
-- StringLike
-- StringNotLike
-- StringEquals
-- StringNotEquals
-- Null
-- IPAddress
+- StringLike: Matches a string allowing you to use the glob operator (*) for wildcard matches.
+- StringNotLike: Makes sure that the value doesn't match the value, allows you to use the glob operator (*) for wildcard matches.
+- StringEquals: Makes sure that the field value exactly matches.
+- StringNotEquals: Makes sure that the field value doesn't exactly match.
+- Null: Makes sure that the fields is not null, undefined, or an empty string.
+- IPAddress: Makes sure that the field matches with an ip address.
+
+All if an array is provided to the condition then all the values are treated as AND's meaning that every value must be true for the condition in order for the policy to be applied. NOTE: This is not true for IPAddress which is treated as an OR, in which case only one must be true for the policy to be applied.
 
 In the policy above you can see that the IpAddress condition is an object that maps fields to the conditions. These are compared against the flattened request and if the conditions do not match then the policy will be ignored for this request.
+
+An interesting IPAddress example is provided below which will give you access to do anything within your resources when you are connecting to your API's locally.
+
+```js
+module.exports = {
+  actions: 'looks',
+  resource: 'lrn:younique:looks',
+  identities: {
+    '*': [
+      'localhost',
+    ],
+  },
+  policies: {
+    'localhost': [
+      {
+        Effect: '*',
+        Action: '*',
+        Resource: '*',
+        Condition: {
+          "IpAddress": {
+            "aws:sourceip": [
+              '127.0.0.1/24"
+            ],
+          },
+        },
+      },
+    ],
+  }
+};
+```
 
 In order to determine what options are available for the fields I've made a helper function where you can pass in your event and request and see what the flattened request will look like. You can then use these fields in your policy conditions.
 
@@ -173,7 +211,7 @@ exports.handler = async (event) => {
 
 ## Authorizing the request
 
-Now that we have the policies available to use we can authorize the user. The event here is the event that was received by a lambda function. The event will contain the cognito id of the user that made the request, or if the request was made by an unauthenticated entity. Depending on your policies the user will either be matched and returned in the `then` or an error will be thrown and returned in the `catch`.
+Now that we have the policies available to use we can authorize the user. The event here is the event that was received by a lambda function. The event will contain the cognito id of the user that made the request or if the request was made by an unauthenticated entity. Depending on your policies the user will either be matched and returned in the `then` or an error will be thrown and returned in the `catch`.
 
 ```js
 const auth = require('auth-sdk');
@@ -197,5 +235,7 @@ exports.handler = async (event) => {
     });
 };
 ```
+
+The request above will generate the following resource: `lrn:younique:looks:::looks` and the following action `looks:list`. These will be matched against the policy you've provided in either the `bootstrap` function or in dynamo.
 
 Go forth and authorize.
