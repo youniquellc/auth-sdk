@@ -11,7 +11,7 @@ let authConfig = {};
  * @param {object} user The user object which will have the authorize function added to it.
  * @returns The modified user object.
  */
-const addAuthorizeToUser = (user) => {
+function addAuthorizeToUser(user) {
   /**
    * Check the users authorization against the found policies.
    * @param {object} event The event received by the lambda function.
@@ -19,7 +19,7 @@ const addAuthorizeToUser = (user) => {
    * @returns The user if the user is authorized.
    * @throws 'Access Denied' if the user is not authorized.
    */
-  user.authorize = async (event, resource) => {
+  user.authorize = async function(event, resource) {
     // Merge the event and resource together into a request.
     var request = createRequest(event, resource);
     user.cognitoId = request.cognito.id;
@@ -81,7 +81,7 @@ const addAuthorizeToUser = (user) => {
  * @param {object} resource The provided resource that the user is authorized against.
  * @returns {object} The merged request data.
  */
-const createRequest = (event, resource) => {
+function createRequest(event, resource) {
   var lrn = resource.lrn;
 
   if (authConfig.resourcePrefix && !lrn.match(/^lrn/)) {
