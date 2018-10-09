@@ -135,15 +135,11 @@ module.exports = {
    */
   getFlattenedRequest: function(event, resource) {
     const request = createRequest(event, resource);
-    const flatContext = {
-      'date.year_month': () => {
-        return '2016 June';
-      }
-    };
+    const flatRequest = {};
 
-    policy.flattenRequest(request, flatContext);
+    policy.flattenRequest(request, flatRequest);
 
-    return flatContext;
+    return flatRequest;
   },
   /**
    * Get the user, context, and roles from dynamo based on the provided id.
