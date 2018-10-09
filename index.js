@@ -180,6 +180,7 @@ module.exports = {
       // Attempt to get the user from the identites table.
       return dynamoUtil.get(IDENTITIES_TABLE, 'identity_id', id)
         .then(data => {
+          console.log('ddb get user', JSON.stringify(data));
           // If there was no data in dynamo then we will return an anonymous user.
           if (!data || data.identity_id !== id) {
             return addAuthorizeToUser({
