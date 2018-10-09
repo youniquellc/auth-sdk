@@ -151,9 +151,11 @@ module.exports = {
    * @param {string} id The id of the user who made the request.
    */
   getUser: async function(id) {
+    console.log('get user id', id);
     if (id && id.requestContext) {
       id = id.requestContext;
     }
+    console.log('get user id after', id);
 
     if (!id) {
       // If there is no logged in user then return a blank user.
