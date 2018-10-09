@@ -20,7 +20,6 @@ function addAuthorizeToUser(user) {
    * @throws 'Access Denied' if the user is not authorized.
    */
   user.authorize = async function(event, resource) {
-    console.log('9');
     // Merge the event and resource together into a request.
     var request = createRequest(event, resource);
     user.cognitoId = request.cognito.id;
@@ -152,16 +151,12 @@ module.exports = {
    * @param {string} id The id of the user who made the request.
    */
   getUser: async function(id) {
-    console.log('5');
-    console.log('get user id', id);
     if (id && id.requestContext) {
       id = id.requestContext;
     }
-    console.log('get user id after', id);
 
     if (!id) {
       // If there is no logged in user then return a blank user.
-    console.log('6');
       return addAuthorizeToUser({
         context: {},
         identity_id: id,
@@ -169,7 +164,6 @@ module.exports = {
       });
     } else if (id && id.identity && !id.identity.cognitoIdentityId && id.identity.caller) {
       // If there is no cognito identity ID then the user is using and aws key and secret directly.
-    console.log('7');
       return addAuthorizeToUser({
         identity_id: 'aws_key',
         context: {
@@ -182,7 +176,6 @@ module.exports = {
       if (id && id.identity) {
         id = id.identity.cognitoIdentityId || '*';
       }
-    console.log('8');
 
       // Attempt to get the user from the identites table.
       return dynamoUtil.get(IDENTITIES_TABLE, 'identity_id', id)
@@ -216,18 +209,14 @@ module.exports = {
    * @param {Object} user The user accessing the resource. If one is not provided then it will be retrieved.
    */
   authorize: async function(event, resource, user = null) {
-    console.log('1');
     // If the user is provided then we can authorize against the provided user.
     if (user) {
       if (!('authorize' in user)) {
-    console.log('2');
         addAuthorizeToUser(user);
       }
-    console.log('3');
       return user.authorize(event, resource);
     } else {
       // Otherwise, we will need to get the user and authorized against the retrieved user.
-    console.log('4');
       return this.getUser(event.requestContext).then(user => user.authorize(event, resource));
     }
   },
