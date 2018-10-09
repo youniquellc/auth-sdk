@@ -8,11 +8,11 @@
     "test": "test"
   },
   "dependencies": {
-    "leo-aws": "^1.2.1",
-    "leo-config": "^1.0.3",
+    "leo-config": "^1.0.7",
     "netmask": "^1.0.6"
   },
   "devDependencies": {
+    "aws-sdk": "^2.330.0",
     "eslint": "^5.6.1",
     "mocha": "^3.5.3"
   },

@@ -4,6 +4,10 @@ This module will retrieve and authorize a user who is logged in via cognito and 
 
 It has two modes. The first mode will connect to the Users tables in AWS and retrieve the policy information from those tables. The second mode allows the developer to code the policies directly into their project and save a few requests to dynamo.
 
+## Requirements
+
+This library is only supported for NodeJS v8+ it uses async/await and arrow functions heavily.
+
 ## Configuration
 
 Two environment variables must be set in order for this library to work correctly.
@@ -15,6 +19,9 @@ AUTH_IDENTITES_TABLE
 AUTH_ROLE_POLICIES_TABLE
   - The preferred way is to import the value from CloudFormation **Fn::ImportValue "Users-RolePoliciesTable"**
   - If you are using serverless you can use **${cf:Users.RolePoliciesTable}**
+
+AUTH_AWS_REGION
+  - You'll need to provide the region to the auth-sdk. This will likely be the same region as you are deploy the stack to, but it needs to be the region where the Users* dynamodb tables exist.
 
 During development you'll need to manually provide the environment variables, unless you are using serverless. If using serverless and the variables above then the environment will be populated automatically. Since this is a public repo, you'll need to look up the variables in the Users stack of the dev AWS account.
 
@@ -58,6 +65,7 @@ Meaning that this user has access to any policies that belong to the "role/admin
 If you'd like to provide the policies yourself, rather than updating the dynamodb tables in production and development, then you can use the bootstrapping method below to provide the policies.
 
 ```js
+const auth = require('auth-sdk');
 const policy = require('./auth_policy');
 auth.bootstrap(policy);
 ```
@@ -134,18 +142,56 @@ module.exports = {
 
 This is the easiest way and does not required a dev ops ticket to implement. Otherwise you'll have to write the policy, test it in dev, and then submit the policy to dev ops to have the policy added to the production dynamo tables.
 
+## Writing policies
+
+There are a few ways to write policies. You can either write a Allow policies (all the policies in the example are allow policies) or you can write Deny policies. Both types of policies accept conditions.
+
+The following is a list of the available conditions:
+- StringLike
+- StringNotLike
+- StringEquals
+- StringNotEquals
+- Null
+- IPAddress
+
+In the policy above you can see that the IpAddress condition is an object that maps fields to the conditions. These are compared against the flattened request and if the conditions do not match then the policy will be ignored for this request.
+
+In order to determine what options are available for the fields I've made a helper function where you can pass in your event and request and see what the flattened request will look like. You can then use these fields in your policy conditions.
+
+```js
+const auth = require('auth-sdk');
+const policy = require('./auth_policy');
+
+exports.handler = async (event) => {
+  const request = {
+    lrn: 'lrn:younique:looks:::{resource}',
+    action: 'list',
+    // The following line is not necessary if you don't want to use replacement. You may just put the resource in the lrn above.
+    looks: { resource: 'looks' }
+  };
+
+  console.log('flattenedRequest', auth.getFlattenedRequest(event, request));
+};
+```
+
 ## Authorizing the request
 
 Now that we have the policies available to use we can authorize the user. The event here is the event that was received by a lambda function. The event will contain the cognito id of the user that made the request, or if the request was made by an unauthenticated entity. Depending on your policies the user will either be matched and returned in the `then` or an error will be thrown and returned in the `catch`.
 
 ```js
+const auth = require('auth-sdk');
+const policy = require('./auth_policy');
+
 exports.handler = async (event) => {
-  auth.authorize(event, {
+  const request = {
     lrn: 'lrn:younique:looks:::{resource}',
     action: 'list',
     // The following line is not necessary if you don't want to use replacement. You may just put the resource in the lrn above.
     looks: { resource: 'looks' }
-  })
+  };
+
+  auth.bootstrap(policy);
+  auth.authorize(event, request)
     .then((user) => {
       console.log('user', JSON.stringify(user));
     })
