@@ -48,9 +48,10 @@ function addAuthorizeToUser(user) {
         Object.keys(data).forEach((id) => {
           const policies = data[id].policies;
           // Gather all the statements that apply to this user.
-          Object.keys(policies).forEach((name) => {
-            statements = [...statements, ...policies[name]];
-          });
+          statements = [...statements, ...(Object.keys(policies).map(name => policies[name]))];
+          // Object.keys(policies).forEach((name) => {
+          //   statements = [...statements, ...policies[name]];
+          // });
 
           // The roles may have additional context attached to them. If requested that data may be pulled into the users record.
           // I.E. If a role "*" has an additional attribute otherdata: { "some": "context" } and the resource has context: ["otherdata"]
