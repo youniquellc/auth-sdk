@@ -49,7 +49,7 @@ function addAuthorizeToUser(user) {
           const policies = data[id].policies;
           // Gather all the statements that apply to this user.
           if (Object.keys(policies).length) {
-            statements = [...statements, Object.keys(policies).map(name => policies[name])];
+            statements = [...statements, ...Object.keys(policies).map(name => policies[name])];
           }
 
           // The roles may have additional context attached to them. If requested that data may be pulled into the users record.
