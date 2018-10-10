@@ -27,9 +27,7 @@ function addAuthorizeToUser(user) {
     if (authConfig.statements) {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements come from the bootstrap function.
-      user.roles.concat('*').map(id => {
-        statements = statements.concat(authConfig.statements[id]);
-      });
+      statements = user.roles.concat('*').map(id => authConfig.statements[id]);
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
@@ -47,14 +45,14 @@ function addAuthorizeToUser(user) {
       Object.keys(data).forEach((id) => {
         const policies = data[id].policies;
         // Gather all the statements that apply to this user.
-        Object.keys(policies).forEach((name) => {
-          statements = statements.concat(policies[name]);
-        });
+        if (Object.keys(policies).length) {
+          statements = [...statements, Object.keys(policies).map(name => policies[name])];
+        }
 
         // The roles may have additional context attached to them. If requested that data may be pulled into the users record.
         // I.E. If a role "*" has an additional attribute otherdata: { "some": "context" } and the resource has context: ["otherdata"]
         // then the user record will come back as user: { context: { "otherdata": { "some": "context" } } }
-        resource.context.map((contextItem) => {
+        resource.context.forEach((contextItem) => {
           user.context[contextItem] = Object.assign(user.context[contextItem] || {}, data[id][contextItem]);
         });
       });
@@ -64,7 +62,7 @@ function addAuthorizeToUser(user) {
     var result = policy.validate(request, policy.contextify(user.context, statements));
 
     // If not then throw an error.
-    if (result.auth !== true) {
+    if (!result.auth) {
       throw 'Access Denied';
     }
 
@@ -189,7 +187,7 @@ module.exports = {
             });
           } else {
             // Support older ones where the context was stored as a string.
-            if (typeof data.context == 'string') {
+            if (typeof data.context === 'string') {
               data.context = JSON.parse(data.context);
             }
 
@@ -228,7 +226,7 @@ module.exports = {
     if (config.actions) {
       let actionPrefix = config.actions;
       let resourcePrefix = config.resource;
-      let parts = resourcePrefix.split(':').filter(e => e.length != 0);
+      let parts = resourcePrefix.split(':').filter(e => e.length !== 0);
       if (!resourcePrefix || parts.length < 3) {
         throw new Error('You have not defined a valid resource prefix. It must exist and have at least three parts separated by colons (:). I.E. lrn:<company>:<project>');
       }

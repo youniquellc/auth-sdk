@@ -6,7 +6,7 @@ It has two modes. The first mode will connect to the Users tables in AWS and ret
 
 ## Requirements
 
-This library is only supported for NodeJS v8+ it uses async/await and arrow functions heavily.
+This library is only supported for NodeJS v8+. It uses async/await and arrow functions heavily.
 
 ## Configuration
 
@@ -59,7 +59,7 @@ Meaning that this user has access to any policies that belong to the "role/admin
 
 ## Bootstrapping
 
-If you'd like to provide the policies yourself, rather than updating the dynamodb tables in production and development, then you can use the bootstrapping method below to provide the policies.
+If you'd like to provide the policies yourself, rather than update the dynamodb tables in production and development, then you can use the bootstrapping method below to provide the policies.
 
 ```js
 const auth = require('auth-sdk');
@@ -141,13 +141,13 @@ module.exports = {
 };
 ```
 
-If you noticed in the policy above the role/user and role/presenter roles both have the same policy names underneath them. This allows you to write the policy only once and then attach it to as many roles as is necessary.
+In the policy above the role/user and role/presenter roles both have the same policy names underneath them. This allows you to write the policy only once and then attach it to as many roles as is necessary.
 
 This is the easiest way and does not required a dev ops ticket to implement. Otherwise you'll have to write the policy, test it in dev, and then submit the policy to dev ops to have the policy added to the production dynamo tables.
 
 ## Writing policies
 
-There are a few ways to write policies. You can either write an Allow policies (all the policies in the example above are allow policies) or you can write Deny policies. Both types of policies accept conditions.
+There are a few ways to write policies. You can either write Allow policies (all the policies in the example above are allow policies) or you can write Deny policies. Both types of policies accept conditions.
 
 The following is a list of the available conditions:
 - StringLike: Matches a string allowing you to use the glob operator (*) for wildcard matches.
