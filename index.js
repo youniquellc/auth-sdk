@@ -20,57 +20,61 @@ function addAuthorizeToUser(user) {
    * @throws 'Access Denied' if the user is not authorized.
    */
   user.authorize = async function(event, resource) {
-    // Merge the event and resource together into a request.
-    var request = createRequest(event, resource);
-    user.cognitoId = request.cognito.id;
-    let statements = [];
-    if (authConfig.statements) {
-      // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
-      // In this case the statements come from the bootstrap function.
-      statements = user.roles.concat('*').map(id => authConfig.statements[id]);
-      console.log('statements', JSON.stringify(statements, null, 2));
-    } else {
-      // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
-      // In this case the statements are read out of dynamo.
-      let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
-      console.log('statements data', JSON.stringify(data, null, 2));
+    try {
+      // Merge the event and resource together into a request.
+      var request = createRequest(event, resource);
+      user.cognitoId = request.cognito.id;
+      let statements = [];
+      if (authConfig.statements) {
+        // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
+        // In this case the statements come from the bootstrap function.
+        statements = user.roles.concat('*').map(id => authConfig.statements[id]);
+        console.log('statements', JSON.stringify(statements, null, 2));
+      } else {
+        // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
+        // In this case the statements are read out of dynamo.
+        let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
+        console.log('statements data', JSON.stringify(data, null, 2));
 
-      if (!resource.context) {
-        resource.context = [];
-      }
-
-      if (!Array.isArray(resource.context)) {
-        resource.context = [resource.context];
-      }
-
-      // Loop over each role name. I.E. "*" and "role/user"
-      Object.keys(data).forEach((id) => {
-        const policies = data[id].policies;
-        // Gather all the statements that apply to this user.
-        if (Object.keys(policies).length) {
-          statements = [...statements, Object.keys(policies).map(name => policies[name])];
+        if (!resource.context) {
+          resource.context = [];
         }
 
-        // The roles may have additional context attached to them. If requested that data may be pulled into the users record.
-        // I.E. If a role "*" has an additional attribute otherdata: { "some": "context" } and the resource has context: ["otherdata"]
-        // then the user record will come back as user: { context: { "otherdata": { "some": "context" } } }
-        resource.context.forEach((contextItem) => {
-          user.context[contextItem] = Object.assign(user.context[contextItem] || {}, data[id][contextItem]);
+        if (!Array.isArray(resource.context)) {
+          resource.context = [resource.context];
+        }
+
+        // Loop over each role name. I.E. "*" and "role/user"
+        Object.keys(data).forEach((id) => {
+          const policies = data[id].policies;
+          // Gather all the statements that apply to this user.
+          if (Object.keys(policies).length) {
+            statements = [...statements, Object.keys(policies).map(name => policies[name])];
+          }
+
+          // The roles may have additional context attached to them. If requested that data may be pulled into the users record.
+          // I.E. If a role "*" has an additional attribute otherdata: { "some": "context" } and the resource has context: ["otherdata"]
+          // then the user record will come back as user: { context: { "otherdata": { "some": "context" } } }
+          resource.context.forEach((contextItem) => {
+            user.context[contextItem] = Object.assign(user.context[contextItem] || {}, data[id][contextItem]);
+          });
         });
-      });
+      }
+
+      console.log('final statements', JSON.stringify(statements, null, 2));
+
+      // Now we can check if the user has the necessary statements/permissions to access the resource requested.
+      var result = policy.validate(request, policy.contextify(user.context, statements));
+
+      // If not then throw an error.
+      if (!result.auth) {
+        throw 'Access Denied';
+      }
+
+      return user;
+    } catch (e) {
+      console.log('authorize err', JSON.stringify(err));
     }
-
-    console.log('final statements', JSON.stringify(statements, null, 2));
-
-    // Now we can check if the user has the necessary statements/permissions to access the resource requested.
-    var result = policy.validate(request, policy.contextify(user.context, statements));
-
-    // If not then throw an error.
-    if (!result.auth) {
-      throw 'Access Denied';
-    }
-
-    return user;
   };
 
   return user;
