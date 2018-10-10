@@ -28,10 +28,12 @@ function addAuthorizeToUser(user) {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements come from the bootstrap function.
       statements = user.roles.concat('*').map(id => authConfig.statements[id]);
+      console.log('statements', JSON.stringify(statements, null, 2));
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
       let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
+      console.log('statements data', JSON.stringify(data, null, 2));
 
       if (!resource.context) {
         resource.context = [];
@@ -57,6 +59,8 @@ function addAuthorizeToUser(user) {
         });
       });
     }
+
+    console.log('final statements', JSON.stringify(statements, null, 2));
 
     // Now we can check if the user has the necessary statements/permissions to access the resource requested.
     var result = policy.validate(request, policy.contextify(user.context, statements));
@@ -178,6 +182,7 @@ module.exports = {
       // Attempt to get the user from the identites table.
       return dynamoUtil.get(IDENTITIES_TABLE, 'identity_id', id)
         .then(data => {
+          console.log('get user data', JSON.stringify(data, null, 2));
           // If there was no data in dynamo then we will return an anonymous user.
           if (!data || data.identity_id !== id) {
             return addAuthorizeToUser({
