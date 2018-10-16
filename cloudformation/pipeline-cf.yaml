@@ -43,7 +43,7 @@ Parameters:
     Default: aws/codebuild/nodejs:8.11.0
 
 Resources:
-  LooksAuthSDKCodeBuildRole:
+  AuthSDKCodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -92,10 +92,10 @@ Resources:
                 Action:
                 - kms:Decrypt
 
-  LooksAuthSDKCodeBuildProject:
+  AuthSDKCodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: LooksAuthSDKCodeBuild
+      Name: AuthSDKCodeBuild
       Artifacts:
         Type: CODEPIPELINE
       Source:
@@ -105,9 +105,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: !Ref BuildImage
         Type: LINUX_CONTAINER
-      ServiceRole: !Ref LooksAuthSDKCodeBuildRole
+      ServiceRole: !Ref AuthSDKCodeBuildRole
 
-  LooksAuthSDKCodePipelineRole:
+  AuthSDKCodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
@@ -150,10 +150,10 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
                   - iam:PassRole
-  LooksPipeline:
+  Pipeline:
       Type: AWS::CodePipeline::Pipeline
       Properties:
-        RoleArn: !GetAtt LooksAuthSDKCodePipelineRole.Arn
+        RoleArn: !GetAtt AuthSDKCodePipelineRole.Arn
         ArtifactStore:
           Type: S3
           Location: !Sub ${AuthSDKArtifactsBucket}
@@ -183,10 +183,10 @@ Resources:
                   Version: 1
                   Provider: CodeBuild
                 Configuration:
-                  ProjectName: !Ref LooksAuthSDKCodeBuildProject
+                  ProjectName: !Ref AuthSDKCodeBuildProject
                 InputArtifacts:
                   - Name: App
                 RunOrder: 1
 Outputs:
   PipelineUrl:
-    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${LooksPipeline}
+    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
