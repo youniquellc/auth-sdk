@@ -1,0 +1,15 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - apt update
+      - apt install python-pip python-dev jq -y
+      - pip install awscli --upgrade --user
+      - TOKEN=`~/.local/bin/aws secretsmanager get-secret-value --secret-id "codebuild" | jq -r .'SecretString' | jq -r .'npmrc'`
+      - echo "//registry.npmjs.org/:_authToken=$TOKEN" > ~/.npmrc
+      - npm i -g npm
+
+  build:
+    commands:
+      - npm ci
+      - npm publish
