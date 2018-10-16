@@ -14,7 +14,7 @@ Metadata:
         default: CodeBuild Options
       Parameters:
         - BuildImage
-        - JSArtifactsBucket
+        - AuthSDKArtifactsBucket
 
 Parameters:
   GitHubBranch:
@@ -24,7 +24,7 @@ Parameters:
   GitHubRepo:
     Description: Github Repo
     Type: String
-    Default: javascript-common
+    Default: auth-sdk
   GitHubOwner:
     Description: Github Owner
     Type: String
@@ -33,7 +33,7 @@ Parameters:
     Description: Github Token
     Type: String
     NoEcho: True
-  JSArtifactsBucket:
+  AuthSDKArtifactsBucket:
     Description: Source Artifacts bucket
     Type: String
     Default: microassets-artifacts-13zrd4dkkmyfk
@@ -43,7 +43,7 @@ Parameters:
     Default: aws/codebuild/nodejs:8.11.0
 
 Resources:
-  JSCodeBuildRole:
+  LooksAuthSDKCodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -58,9 +58,9 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Resource: 
-                - !Sub arn:aws:s3:::${JSArtifactsBucket}/
-                - !Sub arn:aws:s3:::${JSArtifactsBucket}/*
+              - Resource:
+                - !Sub arn:aws:s3:::${AuthSDKArtifactsBucket}/
+                - !Sub arn:aws:s3:::${AuthSDKArtifactsBucket}/*
                 Effect: Allow
                 Action:
                 - s3:*
@@ -81,21 +81,21 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - Resource: 
+              - Resource:
                 - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:codebuild-xvy8k8
                 Effect: Allow
                 Action:
                 - secretsmanager:GetSecretValue
-              - Resource: 
+              - Resource:
                 - !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/0a6cb66c-0d04-40c7-920d-edfc7b4bac00
                 Effect: Allow
                 Action:
                 - kms:Decrypt
 
-  JSCodeBuildProject:
+  LooksAuthSDKCodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: JSCodeBuild
+      Name: LooksAuthSDKCodeBuild
       Artifacts:
         Type: CODEPIPELINE
       Source:
@@ -105,9 +105,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: !Ref BuildImage
         Type: LINUX_CONTAINER
-      ServiceRole: !Ref JSCodeBuildRole
+      ServiceRole: !Ref LooksAuthSDKCodeBuildRole
 
-  JSCodePipelineRole:
+  LooksAuthSDKCodePipelineRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
@@ -124,8 +124,8 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Resource:
-                - !Sub arn:aws:s3:::${JSArtifactsBucket}/
-                - !Sub arn:aws:s3:::${JSArtifactsBucket}/*
+                - !Sub arn:aws:s3:::${AuthSDKArtifactsBucket}/
+                - !Sub arn:aws:s3:::${AuthSDKArtifactsBucket}/*
                 Effect: Allow
                 Action:
                   - s3:PutObject
@@ -150,13 +150,13 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
                   - iam:PassRole
-  Pipeline:
+  LooksPipeline:
       Type: AWS::CodePipeline::Pipeline
       Properties:
-        RoleArn: !GetAtt JSCodePipelineRole.Arn
+        RoleArn: !GetAtt LooksAuthSDKCodePipelineRole.Arn
         ArtifactStore:
           Type: S3
-          Location: !Sub ${JSArtifactsBucket}
+          Location: !Sub ${AuthSDKArtifactsBucket}
         Stages:
           - Name: Source
             Actions:
@@ -183,11 +183,10 @@ Resources:
                   Version: 1
                   Provider: CodeBuild
                 Configuration:
-                  ProjectName: !Ref JSCodeBuildProject
+                  ProjectName: !Ref LooksAuthSDKCodeBuildProject
                 InputArtifacts:
                   - Name: App
                 RunOrder: 1
 Outputs:
   PipelineUrl:
-    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
-
+    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${LooksPipeline}
