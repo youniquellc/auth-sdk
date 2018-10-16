@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Public Javascript Common
+Description: Auth SDK Pipeline
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
