@@ -181,7 +181,7 @@ module.exports = {
         Condition: {
           "IpAddress": {
             "aws:sourceip": [
-              '127.0.0.1/24"
+              "127.0.0.1/24"
             ],
           },
         },
