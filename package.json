@@ -1,5 +1,5 @@
 {
-  "name": "auth-sdk",
+  "name": "@youniquellc/auth-sdk",
   "version": "2.0.1",
   "description": "Auth SDK",
   "main": "index.js",

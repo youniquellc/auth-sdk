@@ -19,7 +19,7 @@ function addAuthorizeToUser(user) {
    * @returns The user if the user is authorized.
    * @throws 'Access Denied' if the user is not authorized.
    */
-  user.authorize = async function(event, resource) {
+  user.authorize = async function (event, resource) {
     // Merge the event and resource together into a request.
     var request = createRequest(event, resource);
     user.cognitoId = request.cognito.id;
@@ -27,7 +27,7 @@ function addAuthorizeToUser(user) {
     if (authConfig.statements) {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements come from the bootstrap function.
-      statements = user.roles.concat('*').map(id => authConfig.statements[id]);
+      user.roles.concat('*').forEach(id => statements = [...statements, ...authConfig.statements[id]]);
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
@@ -71,7 +71,7 @@ function addAuthorizeToUser(user) {
   };
 
   return user;
-};
+}
 
 /**
  * Merge the received event and the requested resource together to create the request to authorize.
@@ -126,7 +126,7 @@ function createRequest(event, resource) {
       poolId: event.requestContext.identity.cognitoIdentityPoolId
     }
   };
-};
+}
 
 
 module.exports = {
@@ -137,7 +137,7 @@ module.exports = {
    * @param {Object} event The event received by the lambda function.
    * @param {Object} resource The provided resource that the user is authorized against.
    */
-  getFlattenedRequest: function(event, resource) {
+  getFlattenedRequest: function (event, resource) {
     const request = createRequest(event, resource);
     const flatRequest = {};
 
@@ -149,7 +149,7 @@ module.exports = {
    * Get the user, context, and roles from dynamo based on the provided id.
    * @param {string} id The id of the user who made the request.
    */
-  getUser: async function(id) {
+  getUser: async function (id) {
     if (id && id.requestContext) {
       id = id.requestContext;
     }
@@ -206,7 +206,7 @@ module.exports = {
    * @param {Object} resource The provided resource that the user is authorized against.
    * @param {Object} user The user accessing the resource. If one is not provided then it will be retrieved.
    */
-  authorize: async function(event, resource, user = null) {
+  authorize: async function (event, resource, user = null) {
     // If the user is provided then we can authorize against the provided user.
     if (user) {
       if (!('authorize' in user)) {
@@ -223,7 +223,7 @@ module.exports = {
    *
    * @param {object} config The policies and statements used to bypass the request to dynamo. (See README.md for a complete example)
    */
-  bootstrap: function(config) {
+  bootstrap: function (config) {
     if (config.actions) {
       let actionPrefix = config.actions;
       let resourcePrefix = config.resource;
