@@ -24,7 +24,7 @@ During development you'll need to manually provide the environment variables, un
 
 ## Process
 
-What happens when a user makes a request via API Gateway to a function that is using auth-sdk? First the cognito id is matched against the identity stored in the identities table. This will give us any identifying information about this user. This means that we will get any context for the user as well as any roles that the user belongs to.
+What happens when a user makes a request via API Gateway to a function that is using @youniquellc/auth-sdk? First the cognito id is matched against the identity stored in the identities table. This will give us any identifying information about this user. This means that we will get any context for the user as well as any roles that the user belongs to.
 
 The response will look similar to the following.
 
@@ -62,7 +62,7 @@ Meaning that this user has access to any policies that belong to the "role/admin
 If you'd like to provide the policies yourself, rather than update the dynamodb tables in production and development, then you can use the bootstrapping method below to provide the policies.
 
 ```js
-const auth = require('auth-sdk');
+const auth = require('@youniquellc/auth-sdk');
 const policy = require('./auth_policy');
 auth.bootstrap(policy);
 ```
@@ -194,7 +194,7 @@ module.exports = {
 In order to determine what options are available for the fields I've made a helper function where you can pass in your event and request and see what the flattened request will look like. You can then use these fields in your policy conditions.
 
 ```js
-const auth = require('auth-sdk');
+const auth = require('@youniquellc/auth-sdk');
 const policy = require('./auth_policy');
 
 exports.handler = async (event) => {
@@ -214,7 +214,7 @@ exports.handler = async (event) => {
 Now that we have the policies available to use we can authorize the user. The event here is the event that was received by a lambda function. The event will contain the cognito id of the user that made the request or if the request was made by an unauthenticated entity. Depending on your policies the user will either be matched and returned in the `then` or an error will be thrown and returned in the `catch`.
 
 ```js
-const auth = require('auth-sdk');
+const auth = require('@youniquellc/auth-sdk');
 const policy = require('./auth_policy');
 
 exports.handler = async (event) => {
