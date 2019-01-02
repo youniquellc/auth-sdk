@@ -175,7 +175,7 @@ module.exports = {
   policies: {
     'localhost': [
       {
-        Effect: '*',
+        Effect: 'Allow',
         Action: '*',
         Resource: '*',
         Condition: {
