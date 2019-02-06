@@ -106,11 +106,6 @@ function createRequest(event, resource) {
     }
   }
 
-  // The fifth item in the lrn will be the entity or entities we are wishing to perform the action on.
-  // I.E. lrn:younique:looks:::look:create then the entity will be a "look"
-  // OR lrn:younique:looks:::looks:list then the entities will be "looks"
-  const entity = lrn.split(':')[5];
-
   return {
     id: event.requestContext.requestId,
     time: Date.now(),
