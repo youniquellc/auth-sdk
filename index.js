@@ -58,7 +58,6 @@ function addAuthorizeToUser(user) {
       });
     }
 
-
     // Now we can check if the user has the necessary statements/permissions to access the resource requested.
     var result = policy.validate(request, policy.contextify(user.context, statements));
 
@@ -115,7 +114,7 @@ function createRequest(event, resource) {
   return {
     id: event.requestContext.requestId,
     time: Date.now(),
-    action: entity + ':' + resource.action,
+    action: system + ':' + resource.action,
     lrn: lrn,
     aws: Object.assign({}, event.requestContext.identity, event.requestContext),
     [system]: resource[system],
