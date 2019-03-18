@@ -5,6 +5,7 @@ const IDENTITIES_TABLE = process.env.AUTH_IDENTITES_TABLE;
 const ROLE_POLICIES_TABLE = process.env.AUTH_ROLE_POLICIES_TABLE;
 
 let authConfig = {};
+let derivedUserStatements = [];
 
 /**
  * Add the authorize function to the user object.
@@ -31,7 +32,7 @@ function addAuthorizeToUser(user) {
     } else {
       // Every user is part of the '*' role, so add it and gather the statements for all roles belonging to the user.
       // In this case the statements are read out of dynamo.
-      let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'), {});
+      let data = await dynamoUtil.queryAll(ROLE_POLICIES_TABLE, 'role', user.roles.concat('*'));
 
       if (!resource.context) {
         resource.context = [];
@@ -58,6 +59,8 @@ function addAuthorizeToUser(user) {
       });
     }
 
+    // Store the used statements in case they need to be retrieved later.
+    derivedUserStatements = statements;
 
     // Now we can check if the user has the necessary statements/permissions to access the resource requested.
     var result = policy.validate(request, policy.contextify(user.context, statements));
@@ -144,6 +147,16 @@ module.exports = {
     policy.flattenRequest(request, flatRequest);
 
     return flatRequest;
+  },
+  /**
+   * A debugging function which allows the caller to see which statements were derived for the given user.
+   *
+   *
+   *
+   * @returns {Array}
+   */
+  getDerivedUserStatements: function() {
+    return derivedUserStatements;
   },
   /**
    * Get the user, context, and roles from dynamo based on the provided id.
