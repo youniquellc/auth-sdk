@@ -239,3 +239,37 @@ exports.handler = async (event) => {
 The request above will generate the following resource: `lrn:younique:looks:::looks` and the following action `looks:list`. These will be matched against the policy you've provided in either the `bootstrap` function or in dynamo.
 
 Go forth and authorize.
+
+## Debugging
+
+If you are having trouble getting a request to authorize then you can use the following example to try and debug why the request is not authorizing.
+
+```js
+const auth = require('@youniquellc/auth-sdk');
+const policy = require('./auth_policy');
+
+exports.handler = async (event) => {
+  const request = {
+    lrn: 'lrn:younique:looks:::{resource}',
+    action: 'list',
+    looks: { resource: 'looks' }
+  };
+
+  auth.bootstrap(policy);
+  auth.authorize(event, request)
+    .then((user) => {
+      console.log('user', JSON.stringify(user));
+    })
+    .catch((authErr) => {
+      /* DEBUGGING BEGINS */
+      console.log('Request:', auth.getFlattenedRequest(event, request));
+      console.log('Statements:', auth.getDerivedUserStatements());
+      /* DEBUGGING ENDS */
+      console.log('authErr', authErr);
+    });
+};
+```
+
+The request will describe the users current request. Pay particular attention to the action and the lrn. Then you can compare this with the statements which were derived from the users roles.
+
+The user must have access to the action and the lrn based on their statements.
