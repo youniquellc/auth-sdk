@@ -151,7 +151,7 @@ module.exports = {
   /**
    * A debugging function which allows the caller to see which statements were derived for the given user.
    *
-   *
+   * NOTE: This function must be called after a call to authorize or the user statements will not have been populated yet.
    *
    * @returns {Array}
    */
